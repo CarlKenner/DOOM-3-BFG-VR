@@ -208,6 +208,17 @@ ResizeInteractionTable
 */
 void idRenderWorldLocal::ResizeInteractionTable()
 {
+	//anon
+	// foresthale 2014-05-10: added a case for when there is no interaction table (this happens in the editor on the first R_AddSingleLight)
+	if (!interactionTable)
+	{
+		interactionTableWidth = entityDefs.Num() + 1000; // motorsep 11-27-2014; was 100
+		interactionTableHeight = lightDefs.Num() + 1000; // motorsep 11-27-2014; was 100
+		const int	size = interactionTableWidth * interactionTableHeight * sizeof(*interactionTable);
+		interactionTable = (idInteraction**)R_ClearedStaticAlloc(size);
+		return;
+	}
+
 	// we overflowed the interaction table, so make it larger
 	common->Printf( "idRenderWorldLocal::ResizeInteractionTable: overflowed interactionTable, resizing\n" );
 	

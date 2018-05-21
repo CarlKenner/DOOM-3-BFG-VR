@@ -40,6 +40,28 @@ If you have questions concerning this license or the applicable additional terms
 ===============================================================================
 */
 
+
+//ANON
+/*
+================
+idListSortCompare<type>
+================
+*/
+#ifdef __INTEL_COMPILER
+// the intel compiler doesn't do the right thing here
+template< class type >
+ID_INLINE int idListSortCompare(const type *a, const type *b) {
+	assert(0);
+	return 0;
+}
+#else
+template< class type >
+ID_INLINE int idListSortCompare(const type *a, const type *b) {
+	return *a - *b;
+}
+#endif
+//ANON end
+
 /*
 ========================
 idListArrayNew
@@ -163,6 +185,7 @@ public:
 	// removes the element at the given index and places the last element into its spot - DOES NOT PRESERVE LIST ORDER
 	bool			RemoveIndexFast( int index );
 	bool			Remove( const _type_ & obj );						// remove the element
+	void			Sort(cmp_t *compare = (cmp_t *)&idListSortCompare<_type_>);
 //	void			Sort( cmp_t *compare = ( cmp_t * )&idListSortCompare<_type_, _tag_> );
 	void			SortWithTemplate( const idSort<_type_>& sort = idSort_QuickDefault<_type_>() );
 //	void			SortSubSection( int startIndex, int endIndex, cmp_t *compare = ( cmp_t * )&idListSortCompare<_type_> );

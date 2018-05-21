@@ -3096,7 +3096,7 @@ void Brush_UpdateLightPoints(brush_t *b, const idVec3 &offset) {
 	if (str && strlen(str) > 0) {
 		const idMaterial	*q = Texture_LoadLight(str);
 		if (q) {
-			b->lightTexture = q->GetEditorImage()->GetTexnum();
+			b->lightTexture = q->GetEditorImage()->GetTexNum();
 		}
 	}
 

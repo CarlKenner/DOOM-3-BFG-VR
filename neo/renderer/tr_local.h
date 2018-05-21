@@ -811,6 +811,13 @@ public:
 	
 	virtual void			WriteDemoPics();
 	virtual void			DrawDemoPics();
+
+	//anon
+	// foresthale 2014-05-19: the editor views need some wrapper code to set up a view render and restore state afterward so that the fixed function OpenGL code of the editors keep working
+	virtual void			Editor_SetupState();
+	virtual void			Editor_BeginView(int width, int height, int &restoreWidth, int &restoreHeight);
+	virtual void			Editor_EndView(int restoreWidth, int restoreHeight);
+
 	virtual const emptyCommand_t* 	SwapCommandBuffers( uint64* frontEndMicroSec, uint64* backEndMicroSec, uint64* shadowMicroSec, uint64* gpuMicroSec );
 	
 	virtual void			SwapCommandBuffers_FinishRendering( uint64* frontEndMicroSec, uint64* backEndMicroSec, uint64* shadowMicroSec, uint64* gpuMicroSec );

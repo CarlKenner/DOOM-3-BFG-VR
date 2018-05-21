@@ -766,6 +766,14 @@ BindNull
 void idImageManager::BindNull()
 {
 	RENDERLOG_PRINTF( "BindNull()\n" );
+
+	// foresthale 2014-05-10: when using the tools code (which does not use shaders) we have to manage the texture unit enables
+	if (com_editors)
+	{
+		//qglActiveTexture(GL_TEXTURE0_ARB + backEnd.glState.currenttmu);
+		glDisable(GL_TEXTURE_2D);
+		glDisable(GL_TEXTURE_CUBE_MAP);
+	}
 	
 }
 
@@ -811,6 +819,10 @@ void idImageManager::BeginLevelLoad()
 {
 	insideLevelLoad = true;
 	
+	// foresthale 2014-05-28: Brian Harris suggested the editors should never purge assets, because of potential for crashes on improperly refcounted assets
+	if (com_editors)
+		return;
+
 	for( int i = 0 ; i < images.Num() ; i++ )
 	{
 		idImage*	image = images[ i ];

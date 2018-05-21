@@ -2151,3 +2151,34 @@ void idThread::Event_InfluenceActive()
 		idThread::ReturnInt( false );
 	}
 }
+
+//ANON
+
+/*
+================
+idThread::DebugInfo
+================
+*/
+void idThread::DebugInfo(msg_t & threadMsg)
+{
+	int waitTime = 0;
+	idStr waitMsg;
+
+	const function_t * func = interpreter.GetCurrentFunction();
+	threadMsg.WriteString(func ? func->Name() : "");
+
+	if (interpreter.doneProcessing && !interpreter.threadDying)
+	{
+		// paused time
+		waitTime = gameLocal.time - lastExecuteTime;
+		if (waitingForThread)
+			waitMsg.Format("Waiting for thread #%3i '%s'\n", waitingForThread->GetThreadNum(), waitingForThread->GetThreadName());
+		else if ((waitingFor != ENTITYNUM_NONE) && (waitingFor < MAX_GENTITIES) && (gameLocal.entities[waitingFor]))
+			waitMsg.Format("Waiting for entity #%3i '%s'\n", waitingFor, gameLocal.entities[waitingFor]->name.c_str());
+		else if (waitingUntil)
+			waitMsg.Format("Waiting until %d (%d ms total wait time)\n", waitingUntil, waitingUntil - lastExecuteTime);
+	}
+
+	threadMsg.Write<int>(waitTime);
+	threadMsg.WriteString(waitMsg.c_str());
+}

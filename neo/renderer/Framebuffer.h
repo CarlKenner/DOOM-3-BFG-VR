@@ -120,6 +120,7 @@ struct globalFramebuffers_t
 	Framebuffer*				primaryFBO;
 	Framebuffer*				resolveFBO;
 	Framebuffer*				fullscreenFBO;
+	Framebuffer*                editorFBO;
 
 };
 extern globalFramebuffers_t globalFramebuffers;

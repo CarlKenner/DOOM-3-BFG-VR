@@ -74,6 +74,8 @@ static sysMemoryStats_t exeLaunchMemoryStats;
 
 static HANDLE hProcessMutex;
 
+bool enableToolsSupport = true;
+
 /*
 ================
 Sys_GetExeLaunchMemoryStatus
@@ -289,6 +291,40 @@ Sys_GetCmdLine
 */
 const char * Sys_GetCmdLine() {
 	return sys_cmdline;
+}
+
+//AON: motorsep 12-28-2014 - reverted back to the original Sys_ReLaunch; guys from RBDoom 3 BFG team made it impossible to pass any cmds on restart
+//void Sys_ReLaunch() {
+void Sys_ReLaunch(void * data, const unsigned int dataSize) {
+	TCHAR				szPathOrig[MAX_PRINT_MSG];
+	STARTUPINFO			si;
+	PROCESS_INFORMATION	pi;
+
+	ZeroMemory(&si, sizeof(si));
+	si.cb = sizeof(si);
+
+	/*
+	// DG: we don't have function arguments in Sys_ReLaunch() anymore, everyone only passed
+	//     the command-line +" +set com_skipIntroVideos 1" anyway and it was painful on POSIX systems
+	//     so let's just add it here.
+	idStr cmdLine = Sys_GetCmdLine();
+	if( cmdLine.Find( "com_skipIntroVideos" ) < 0 )
+	{
+	cmdLine.Append( " +set com_skipIntroVideos 1" );
+	}
+	strcpy( szPathOrig, va( "\"%s\" %s", Sys_EXEPath(), cmdLine.c_str() ) );
+	// DG end
+	*/
+
+	strcpy(szPathOrig, va("\"%s\" %s", Sys_EXEPath(), (const char *)data));
+
+	CloseHandle(hProcessMutex);
+
+	if (!CreateProcess(NULL, szPathOrig, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi)) {
+		idLib::Error("Could not start process: '%s' ", szPathOrig);
+		return;
+	}
+	cmdSystem->AppendCommandText("quit\n");
 }
 
 /*
@@ -1613,6 +1649,60 @@ int WINAPI WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 
 		// set exceptions, even if some crappy syscall changes them!
 		Sys_FPU_EnableExceptions( TEST_FPU_EXCEPTIONS );
+
+
+		///ANON
+#ifdef ID_ALLOW_TOOLS
+		if (com_editors && enableToolsSupport) {
+			if (com_editors & EDITOR_GUI) {
+				// GUI editor
+				GUIEditorRun();
+			}
+			else if (com_editors & EDITOR_RADIANT) {
+				// Level Editor
+				RadiantRun();
+			}
+			else if (com_editors & EDITOR_MATERIAL) {
+				//BSM Nerve: Add support for the material editor
+				//ANON:Linking errors plus code isnt included
+				//MaterialEditorRun();
+			}
+			else {
+				if (com_editors & EDITOR_LIGHT) {
+					// in-game Light Editor
+					LightEditorRun();
+				}
+				if (com_editors & EDITOR_SOUND) {
+					// in-game Sound Editor
+					SoundEditorRun();
+				}
+				if (com_editors & EDITOR_DECL) {
+					// in-game Declaration Browser
+					DeclBrowserRun();
+				}
+				if (com_editors & EDITOR_AF) {
+					// in-game Articulated Figure Editor
+					AFEditorRun();
+				}
+				if (com_editors & EDITOR_PARTICLE) {
+					// in-game Particle Editor
+					ParticleEditorRun();
+				}
+				if (com_editors & EDITOR_SCRIPT) {
+					// in-game Script Editor
+					ScriptEditorRun();
+				}
+				if (com_editors & EDITOR_PDA) {
+					// in-game PDA Editor
+					PDAEditorRun();
+				}
+			}
+		}
+#endif
+
+		//DebuggerClientUpdate();
+
+		//ANON end
 
 		// run the game
 		common->Frame();

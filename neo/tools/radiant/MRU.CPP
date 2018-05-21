@@ -203,7 +203,7 @@ void DeleteMruMenu(LPMRUMENU lpMruMenu)
 //*************************************************************
 void SetNbLruShow   (LPMRUMENU lpMruMenu,WORD wNbLruShowInit)
 {
-  lpMruMenu->wNbLruShow = min(wNbLruShowInit,lpMruMenu->wNbLruMenu);
+  lpMruMenu->wNbLruShow = Min(wNbLruShowInit,lpMruMenu->wNbLruMenu);
 }
 
 //*************************************************************
@@ -238,7 +238,7 @@ BOOL SetMenuItem    (LPMRUMENU lpMruMenu,WORD wItem,LPSTR lpItem)
   _fstrncpy((lpMruMenu->lpMRU) + 
             ((lpMruMenu->wMaxSizeLruItem) * (UINT)wItem),
             lpItem,lpMruMenu->wMaxSizeLruItem-1);
-  lpMruMenu->wNbItemFill = max(lpMruMenu->wNbItemFill,wItem+1);
+  lpMruMenu->wNbItemFill = MAX(lpMruMenu->wNbItemFill,wItem+1);
   return TRUE;
 }
 
@@ -323,7 +323,7 @@ WORD i,j;
         _fstrncpy(lpMruMenu->lpMRU,lpItem,lpMruMenu->wMaxSizeLruItem-1);  
         return ;
       }
-  lpMruMenu->wNbItemFill = min(lpMruMenu->wNbItemFill+1,lpMruMenu->wNbLruMenu);
+  lpMruMenu->wNbItemFill = MIN(lpMruMenu->wNbItemFill+1,lpMruMenu->wNbLruMenu);
   for (i=lpMruMenu->wNbItemFill-1;i>0;i--)
      lstrcpy(lpMruMenu->lpMRU + (lpMruMenu->wMaxSizeLruItem * (UINT)i),
              lpMruMenu->lpMRU + (lpMruMenu->wMaxSizeLruItem * (UINT)(i-1)));
@@ -408,7 +408,7 @@ WORD wNbShow;
   // If they are item, insert a separator before the files
   InsertMenu(hMenu,uiItem,MF_SEPARATOR,lpMruMenu->wIdMru,NULL);
 
-  wNbShow = min(lpMruMenu->wNbItemFill,lpMruMenu->wNbLruShow);
+  wNbShow = Min(lpMruMenu->wNbItemFill,lpMruMenu->wNbLruShow);
   for (i=(int)wNbShow-1;i>=0;i--)
   {
   LPSTR lpTxt;

@@ -156,12 +156,21 @@ typedef enum
 	CUTSCENE_FLICKSYNC_GAMEOVER
 } t_cutscene;
 
-typedef enum {
+//ANON:This brother me
+/*typedef enum {
 	SCENES_ALL = 0,
 	SCENES_CHAPTER = 1,
 	SCENES_MYSTART = 2,
 	SCENES_STORYLINE = 3,
 	SCENES_MINEONLY = 4
+};*/
+
+typedef enum {
+	SCENES_ALL,
+	SCENES_CHAPTER,
+	SCENES_MYSTART,
+	SCENES_STORYLINE,
+	SCENES_MINEONLY
 };
 
 bool Flicksync_Voice( const char* entity, const char* animation, const char* lineName, int channel, uint32 length );

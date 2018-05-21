@@ -1204,3 +1204,59 @@ bool idRenderSystemLocal::UploadImage( const char* imageName, const byte* data, 
 	image->UploadScratch( data, width, height );
 	return true;
 }
+
+// foresthale 2014-05-19: the editor views need some wrapper code to set up a view render and restore state afterward so that the fixed function OpenGL code of the editors keep working
+void idRenderSystemLocal::Editor_SetupState()
+{
+	// make sure we're using fixed function rendering (program = 0)
+	renderProgManager.Unbind();
+	// make sure we're drawing to the system framebuffer (fbo = 0)
+	//globalFramebuffers2->BindSystemFramebuffer();
+	//ANON
+	globalFramebuffers.editorFBO->Bind();
+
+}
+
+void idRenderSystemLocal::Editor_BeginView(int width, int height, int &restoreWidth, int &restoreHeight)
+{
+	// save the attributes so we can restore them later
+	glPushAttrib(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_ENABLE_BIT | GL_POLYGON_BIT | GL_SCISSOR_BIT | GL_STENCIL_BUFFER_BIT | GL_TEXTURE_BIT | GL_TRANSFORM_BIT | GL_VIEWPORT_BIT);
+	// change the render size
+	SwapCommandBuffers(NULL, NULL, NULL, NULL);
+	restoreWidth = glConfig.nativeScreenWidth;
+	restoreHeight = glConfig.nativeScreenHeight;
+	glConfig.nativeScreenWidth = width;
+	glConfig.nativeScreenHeight = height;
+	SwapCommandBuffers(NULL, NULL, NULL, NULL); // this is needed for the nativeScreenWidth/Height to take hold
+}
+
+void idRenderSystemLocal::Editor_EndView(int restoreWidth, int restoreHeight)
+{
+	// this should exit right after vsync, with the GPU idle and ready to draw
+	const emptyCommand_t* cmd = SwapCommandBuffers(NULL, NULL, NULL, NULL);
+	// get the GPU busy with new commands
+	RenderCommandBuffers(cmd);
+	// discard anything currently on the list (this triggers SwapBuffers)
+	SwapCommandBuffers(NULL, NULL, NULL, NULL);
+	glConfig.nativeScreenWidth = restoreWidth;
+	glConfig.nativeScreenHeight = restoreHeight;
+	SwapCommandBuffers(NULL, NULL, NULL, NULL); // this is needed for the nativeScreenWidth/Height to take hold
+
+    // now restore state for fixed function editor rendering
+	//ANON
+	globalFramebuffers.editorFBO->Bind();
+	//globalFramebuffers2->BindSystemFramebuffer();
+	//	qglDisable(GL_SCISSOR_TEST);
+	//	qglDisable(GL_DEPTH_TEST);
+	//	qglDisable(GL_BLEND);
+	//	qglColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+	//	qglDepthMask(GL_TRUE);
+	//	qglBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glPopAttrib();
+	// make sure we're using fixed function rendering
+	renderProgManager.Unbind();
+	glBindTexture(GL_TEXTURE_2D, 0);
+	glEnable(GL_TEXTURE_2D);
+	glDisable(GL_TEXTURE_3D);
+	glDisable(GL_TEXTURE_CUBE_MAP);
+}

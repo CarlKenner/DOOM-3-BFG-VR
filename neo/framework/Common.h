@@ -115,18 +115,24 @@ ID_INLINE bool EndTraceRecording()
 typedef enum
 {
 	EDITOR_NONE					= 0,
-	EDITOR_GUI					= BIT( 1 ),
-	EDITOR_DEBUGGER				= BIT( 2 ),
-	EDITOR_SCRIPT				= BIT( 3 ),
-	EDITOR_LIGHT				= BIT( 4 ),
-	EDITOR_SOUND				= BIT( 5 ),
-	EDITOR_DECL					= BIT( 6 ),
-	EDITOR_AF					= BIT( 7 ),
-	EDITOR_PARTICLE				= BIT( 8 ),
-	EDITOR_PDA					= BIT( 9 ),
-	EDITOR_AAS					= BIT( 10 ),
-	EDITOR_MATERIAL				= BIT( 11 )
+	EDITOR_RADIANT				= BIT( 1 ),
+	EDITOR_GUI					= BIT( 2 ),
+	EDITOR_DEBUGGER				= BIT( 3 ),
+	EDITOR_SCRIPT				= BIT( 4 ),
+	EDITOR_LIGHT				= BIT( 5 ),
+	EDITOR_SOUND				= BIT( 6 ),
+	EDITOR_DECL					= BIT( 7 ),
+	EDITOR_AF					= BIT( 8 ),
+	EDITOR_PARTICLE				= BIT( 9 ),
+	EDITOR_PDA					= BIT( 10 ),
+	EDITOR_AAS					= BIT( 11 ),
+	EDITOR_MATERIAL				= BIT( 12 ),
+	EDITOR_DMAP					= BIT( 13 )
 } toolFlag_t;
+
+//anon
+extern int			com_editors;			// current active editor(s)
+extern bool			com_editorActive;		//  true if an editor has focus
 
 #define STRTABLE_ID				"#str_"
 #define STRTABLE_ID_LENGTH		5
@@ -336,6 +342,16 @@ public:
 	
 	virtual void				QueueShowShell() = 0;		// Will activate the shell on the next frame.
 	
+	//anon
+	// Initializes a tool with the given dictionary.
+	virtual void				InitTool(const toolFlag_t tool, const idDict *dict) = 0;
+
+	// Activates or deactivates a tool.
+	virtual void				ActivateTool(bool active) = 0;
+
+	// Writes cvars with the given flags to a file.
+	virtual void				WriteFlaggedCVarsToFile(const char *filename, int flags, const char *setCmd) = 0;
+
 	// RB begin
 #if defined(USE_DOOMCLASSIC)
 	virtual currentGame_t		GetCurrentGame() const = 0;

@@ -141,7 +141,7 @@ const int MAX_EXPRESSION_REGISTERS = 4096;
 
 // tools
 #include "../tools/compilers/compiler_public.h"
-
+#include "../tools/edit_public.h"
 //-----------------------------------------------------
 
 #ifndef _D3SDK

@@ -546,6 +546,11 @@ idSoundSystemLocal::BeginLevelLoad
 void idSoundSystemLocal::BeginLevelLoad()
 {
 	insideLevelLoad = true;
+
+	// foresthale 2014-05-28: Brian Harris suggested the editors should never purge assets, because of potential for crashes on improperly refcounted assets
+	if (com_editors)
+		return;
+
 	for( int i = 0; i < samples.Num(); i++ )
 	{
 		if( samples[i]->GetNeverPurge() )

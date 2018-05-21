@@ -35,13 +35,24 @@ If you have questions concerning this license or the applicable additional terms
 // RB: doubled local stack size
 #define LOCALSTACK_SIZE 	(6144 * 2)
 // RB end
-
+#ifdef ID_ALLOW_TOOLS
+//ANON a bit lazy
+//Get rid of the redefition error from the the struct prstack_T 
+//being defined in DebuggerServer.h
+struct prstack_t
+{
+	int 				s;
+	const function_t*	f;
+	int 				stackbase;
+};
+#else
 typedef struct prstack_s
 {
 	int 				s;
 	const function_t*	f;
 	int 				stackbase;
 } prstack_t;
+#endif
 
 class idInterpreter
 {
@@ -125,6 +136,9 @@ public:
 	const prstack_t*		GetCallstack() const;
 	const function_t*	GetCurrentFunction() const;
 	idThread*			GetThread() const;
+
+	//ANON
+	static int sLastScriptExecuteTime;
 	
 };
 

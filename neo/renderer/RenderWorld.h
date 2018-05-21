@@ -224,6 +224,8 @@ typedef struct renderView_s
 	// subviews (mirrors, cameras, etc) will always clear it to zero
 	int						viewID;
 	
+	int						x, y, width, height;	// ################## SR
+
 	float					fov_x, fov_y;		// in degrees
 	idVec3					vieworg;			// has already been adjusted for stereo world seperation
 	idVec3					vieworg_weapon;		// has already been adjusted for stereo world seperation

@@ -268,6 +268,12 @@ literals or sizeof(). NEVER use an actual variable as a parameter to one of thes
 
 #define CONST_ISPOWEROFTWO(x)		( ( (x) & ( (x) - 1 ) ) == 0 && (x) > 0 )
 
+//ANON builtin max and min functions
+#define MAX( x, y )			( (x) > (y) ? (x) : (y) )
+#define MIN( x, y )			( (x) < (y) ? (x) : (y) )
+
+#define CONST_MAX( x, y )			( (x) > (y) ? (x) : (y) )
+
 #define CONST_MAX( x, y )			( (x) > (y) ? (x) : (y) )
 #define CONST_MAX3( x, y, z )		( (x) > (y) ? ( (x) > (z) ? (x) : (z) ) : ( (y) > (z) ? (y) : (z) ) )
 

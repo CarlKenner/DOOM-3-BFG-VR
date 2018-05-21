@@ -34,9 +34,6 @@ If you have questions concerning this license or the applicable additional terms
 #include "Window.h"
 #include "UserInterfaceLocal.h"
 
-#include "d3xp\Game_local.h"
-#include "d3xp\Player.h"
-
 extern idCVar r_skipGuiShaders;		// 1 = don't render any gui elements on surfaces
 
 idUserInterfaceManagerLocal	uiManagerLocal;
@@ -47,8 +44,6 @@ idUserInterfaceManager* 	uiManager = &uiManagerLocal;
 idDeviceContext* dc;
 
 idCVar g_useNewGuiCode(	"g_useNewGuiCode",	"1", CVAR_GAME | CVAR_INTEGER, "use optimized device context code, 2 = toggle on/off every frame" );
-
-idCVar vr_debugTouchCursor( "vr_debugTouchCursor", "0", CVAR_BOOL, "Show the cursor position when using touch screen mode." );
 
 extern idCVar sys_lang;
 
@@ -265,18 +260,6 @@ void idUserInterfaceManagerLocal::DeAlloc( idUserInterface* gui )
 
 idUserInterface* idUserInterfaceManagerLocal::FindGui( const char* qpath, bool autoLoad, bool needUnique, bool forceNOTUnique )
 {
-	// Carl: Fix crash if we're loading a savegame that used the texture pack, without the texture pack.
-	// The only problem is this one missing GUI for the chaingun.
-	// The reason I'm renaming it, rather than just including it, is I don't want to override any modified versions
-	// if someone uses a different version texture pack.
-	if (idStr::Cmp(qpath, "guis/weapons/chaingun_300.gui") == 0)
-	{
-		findFile_t found = fileSystem->FindFile(qpath);
-		if (found == FIND_NO)
-		{
-			qpath = "guis/weapons/chaingun_300_loadgame.gui";
-		}
-	}
 	int c = guis.Num();
 	
 	for( int i = 0; i < c; i++ )
@@ -547,11 +530,7 @@ void idUserInterfaceLocal::DrawCursor()
 	}
 	else
 	{
-		// Koz dont draw cursor if using motion controls in touchscreen mode
-		if ( !game->isVR || vr_controllerStandard.GetInteger() == 1 || !commonVr->VR_USE_MOTION_CONTROLS || vr_guiMode.GetInteger() != 2 || vr_debugTouchCursor.GetBool() )//!gameLocal.GetLocalPlayer()->GuiActive()
-		{
-			dc->DrawCursor( &cursorX, &cursorY, 56.0f );
-		}
+		dc->DrawCursor( &cursorX, &cursorY, 56.0f );
 	}
 }
 

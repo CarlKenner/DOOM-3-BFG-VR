@@ -228,6 +228,8 @@ public:
 	void						CallFunction( idEntity* obj, const function_t* func, bool clearStack );
 	
 	void						DisplayInfo();
+	//ANON
+	void						DebugInfo(msg_t & threadMsg);
 	static idThread*				GetThread( int num );
 	static void					ListThreads_f( const idCmdArgs& args );
 	static void					Restart();

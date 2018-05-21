@@ -492,6 +492,7 @@ void iVr::HMDRender ( idImage *leftCurrent, idImage *rightCurrent )
 	{
 		static ovrLayerHeader	*layers = &oculusLayer.Header;
 		static ovrPosef			eyeRenderPose[2];
+		//ANON: Changed from HmdToEyeOffset to HmdToEyePose
 		static ovrPosef			viewOffset[2] = { hmdEye[0].eyeRenderDesc.HmdToEyePose, hmdEye[1].eyeRenderDesc.HmdToEyePose };
 		static ovrViewScaleDesc viewScaleDesc;
 

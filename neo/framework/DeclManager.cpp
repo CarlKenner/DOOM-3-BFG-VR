@@ -1027,6 +1027,10 @@ void idDeclManagerLocal::BeginLevelLoad()
 {
 	insideLevelLoad = true;
 	
+	// foresthale 2014-05-28: Brian Harris suggested the editors should never purge assets, because of potential for crashes on improperly refcounted assets
+	if (com_editors)
+		return;
+
 	// clear all the referencedThisLevel flags and purge all the data
 	// so the next reference will cause a reparse
 	for( int i = 0; i < DECL_MAX_TYPES; i++ )

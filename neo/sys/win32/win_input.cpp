@@ -1859,3 +1859,218 @@ void idJoystickWin32::PushButton( int inputDeviceNum, int key, bool value )
 		Sys_QueEvent( SE_KEY, key, value, 0, NULL, inputDeviceNum );
 	}
 }
+
+//ANON
+static const unsigned char s_scantokey[256] = {
+	//  0            1       2          3          4       5            6         7
+	//  8            9       A          B          C       D            E         F
+	0,           27,    '1',       '2',        '3',    '4',         '5',      '6',
+	'7',        '8',    '9',       '0',        '-',    '=',          K_BACKSPACE, 9, // 0
+	'q',        'w',    'e',       'r',        't',    'y',         'u',      'i',
+	'o',        'p',    '[',       ']',        K_ENTER,K_LCTRL,      'a',      's',   // 1
+	'd',        'f',    'g',       'h',        'j',    'k',         'l',      ';',
+	'\'',       '`',    K_LSHIFT,   '\\',       'z',    'x',         'c',      'v',   // 2
+	'b',        'n',    'm',       ',',        '.',    '/',         K_RSHIFT,  K_KP_STAR,
+	K_LALT,      K_SPACE,    K_CAPSLOCK,K_F1,       K_F2,   K_F3,        K_F4,     K_F5,  // 3
+	K_F6,       K_F7,   K_F8,      K_F9,       K_F10,  K_PAUSE,     K_SCROLL, K_HOME,
+	K_UPARROW,  K_PGUP, K_KP_MINUS,K_LEFTARROW,K_KP_5, K_RIGHTARROW,K_KP_PLUS,K_END, // 4
+	K_DOWNARROW,K_PGDN, K_INS,     K_DEL,      0,      0,           0,        K_F11,
+	K_F12,      0,      0,         K_LWIN,     K_RWIN, K_APPS,      0,        0,     // 5
+	0,          0,      0,         0,          0,      0,           0,        0,
+	0,          0,      0,         0,          0,      0,           0,        0,     // 6
+	0,          0,      0,         0,          0,      0,           0,        0,
+	0,          0,      0,         0,          0,      0,           0,        0,      // 7
+																					  // shifted
+	0,           27,    '!',       '@',        '#',    '$',         '%',      '^',
+	'&',        '*',    '(',       ')',        '_',    '+',          K_BACKSPACE, 9, // 0
+	'q',        'w',    'e',       'r',        't',    'y',         'u',      'i',
+	'o',        'p',    '[',       ']',        K_ENTER,K_LCTRL,      'a',      's',   // 1
+	'd',        'f',    'g',       'h',        'j',    'k',         'l',      ';',
+	'\'',       '~',    K_LSHIFT,   '\\',       'z',    'x',         'c',      'v',   // 2
+	'b',        'n',    'm',       ',',        '.',    '/',         K_RSHIFT,  K_KP_STAR,
+	K_LALT,      K_SPACE,    K_CAPSLOCK,K_F1,       K_F2,   K_F3,        K_F4,     K_F5,  // 3
+	K_F6,       K_F7,   K_F8,      K_F9,       K_F10,  K_PAUSE,     K_SCROLL, K_HOME,
+	K_UPARROW,  K_PGUP, K_KP_MINUS,K_LEFTARROW,K_KP_5, K_RIGHTARROW,K_KP_PLUS,K_END, // 4
+	K_DOWNARROW,K_PGDN, K_INS,     K_DEL,      0,      0,           0,        K_F11,
+	K_F12,      0,      0,         K_LWIN,     K_RWIN, K_APPS,      0,        0,     // 5
+	0,          0,      0,         0,          0,      0,           0,        0,
+	0,          0,      0,         0,          0,      0,           0,        0,     // 6
+	0,          0,      0,         0,          0,      0,           0,        0,
+	0,          0,      0,         0,          0,      0,           0,        0      // 7
+};
+
+static const unsigned char s_scantokey_german[256] = {
+	//  0            1       2          3          4       5            6         7
+	//  8            9       A          B          C       D            E         F
+	0,           27,    '1',       '2',        '3',    '4',         '5',      '6',
+	'7',        '8',    '9',       '0',        '?',    '\'',        K_BACKSPACE, 9,  // 0
+	'q',        'w',    'e',       'r',        't',    'z',         'u',      'i',
+	'o',        'p',    '=',       '+',        K_ENTER,K_LCTRL,      'a',      's',   // 1
+	'd',        'f',    'g',       'h',        'j',    'k',         'l',      '[',
+	']',        '`',    K_LSHIFT,   '#',        'y',    'x',         'c',      'v',   // 2
+	'b',        'n',    'm',       ',',        '.',    '-',         K_RSHIFT,  K_KP_STAR,
+	K_LALT, K_SPACE,    K_CAPSLOCK,K_F1,       K_F2,   K_F3,        K_F4,     K_F5,  // 3
+	K_F6,       K_F7,   K_F8,      K_F9,       K_F10,  K_PAUSE,     K_SCROLL, K_HOME,
+	K_UPARROW,  K_PGUP, K_KP_MINUS,K_LEFTARROW,K_KP_5, K_RIGHTARROW,K_KP_PLUS,K_END, // 4
+	K_DOWNARROW,K_PGDN, K_INS,     K_DEL,      0,      0,           '<',      K_F11,
+	K_F12,      0,      0,         K_LWIN,     K_RWIN, K_APPS,      0,        0,     // 5
+	0,          0,      0,         0,          0,      0,           0,        0,
+	0,          0,      0,         0,          0,      0,           0,        0,     // 6
+	0,          0,      0,         0,          0,      0,           0,        0,
+	0,          0,      0,         0,          0,      0,           0,        0,      // 7
+																					  // shifted
+	0,           27,    '1',       '2',        '3',    '4',         '5',      '6',
+	'7',        '8',    '9',       '0',        '?',    '\'',        K_BACKSPACE, 9,  // 0
+	'q',        'w',    'e',       'r',        't',    'z',         'u',      'i',
+	'o',        'p',    '=',       '+',        K_ENTER,K_LCTRL,      'a',      's',   // 1
+	'd',        'f',    'g',       'h',        'j',    'k',         'l',      '[',
+	']',        '`',    K_LSHIFT,   '#',        'y',    'x',         'c',      'v',   // 2
+	'b',        'n',    'm',       ',',        '.',    '-',         K_RSHIFT,  K_KP_STAR,
+	K_LALT,      K_SPACE,    K_CAPSLOCK,K_F1,       K_F2,   K_F3,        K_F4,     K_F5,  // 3
+	K_F6,       K_F7,   K_F8,      K_F9,       K_F10,  K_PAUSE,     K_SCROLL, K_HOME,
+	K_UPARROW,  K_PGUP, K_KP_MINUS,K_LEFTARROW,K_KP_5, K_RIGHTARROW,K_KP_PLUS,K_END, // 4
+	K_DOWNARROW,K_PGDN, K_INS,     K_DEL,      0,      0,           '<',      K_F11,
+	K_F12,      0,      0,         K_LWIN,     K_RWIN, K_APPS,      0,        0,     // 5
+	0,          0,      0,         0,          0,      0,           0,        0,
+	0,          0,      0,         0,          0,      0,           0,        0,     // 6
+	0,          0,      0,         0,          0,      0,           0,        0,
+	0,          0,      0,         0,          0,      0,           0,        0      // 7
+};
+
+static const unsigned char s_scantokey_french[256] = {
+	//  0            1       2          3          4       5            6         7
+	//  8            9       A          B          C       D            E         F
+	0,           27,    '1',       '2',        '3',    '4',         '5',      '6',
+	'7',        '8',    '9',       '0',        ')',    '=',         K_BACKSPACE, 9, // 0 
+	'a',        'z',    'e',       'r',        't',    'y',         'u',      'i',
+	'o',        'p',    '^',       '$',        K_ENTER,K_LCTRL,      'q',      's',      // 1 
+	'd',        'f',    'g',       'h',        'j',    'k',         'l',      'm',
+	'ù',        '`',    K_LSHIFT,   '*',        'w',    'x',         'c',      'v',      // 2 
+	'b',        'n',    ',',       ';',        ':',    '!',         K_RSHIFT,  K_KP_STAR,
+	K_LALT,      K_SPACE,    K_CAPSLOCK,K_F1,       K_F2,   K_F3,        K_F4,     K_F5,  // 3
+	K_F6,       K_F7,   K_F8,      K_F9,       K_F10,  K_PAUSE,     K_SCROLL, K_HOME,
+	K_UPARROW,  K_PGUP, K_KP_MINUS,K_LEFTARROW,K_KP_5, K_RIGHTARROW,K_KP_PLUS,K_END, // 4
+	K_DOWNARROW,K_PGDN, K_INS,     K_DEL,      0,      0,           '<',      K_F11,
+	K_F12,      0,      0,         K_LWIN,     K_RWIN, K_APPS,      0,        0,     // 5
+	0,          0,      0,         0,          0,      0,           0,        0,
+	0,          0,      0,         0,          0,      0,           0,        0,     // 6
+	0,          0,      0,         0,          0,      0,           0,        0,
+	0,          0,      0,         0,          0,      0,           0,        0,      // 7
+																					  // shifted
+	0,           27,    '&',       'é',        '\"',    '\'',         '(',      '-',
+	'è',        '_',    'ç',       'à',        '°',    '+',         K_BACKSPACE, 9, // 0 
+	'a',        'z',    'e',       'r',        't',    'y',         'u',      'i',
+	'o',        'p',    '^',       '$',        K_ENTER,K_LCTRL,      'q',      's',      // 1 
+	'd',        'f',    'g',       'h',        'j',    'k',         'l',      'm',
+	'ù',        0,    K_LSHIFT,   '*',        'w',    'x',         'c',      'v',      // 2 
+	'b',        'n',    ',',       ';',        ':',    '!',         K_RSHIFT,  K_KP_STAR,
+	K_LALT,      K_SPACE,    K_CAPSLOCK,K_F1,       K_F2,   K_F3,        K_F4,     K_F5,  // 3
+	K_F6,       K_F7,   K_F8,      K_F9,       K_F10,  K_PAUSE,     K_SCROLL, K_HOME,
+	K_UPARROW,  K_PGUP, K_KP_MINUS,K_LEFTARROW,K_KP_5, K_RIGHTARROW,K_KP_PLUS,K_END, // 4
+	K_DOWNARROW,K_PGDN, K_INS,     K_DEL,      0,      0,           '<',      K_F11,
+	K_F12,      0,      0,         K_LWIN,     K_RWIN, K_APPS,      0,        0,     // 5
+	0,          0,      0,         0,          0,      0,           0,        0,
+	0,          0,      0,         0,          0,      0,           0,        0,     // 6
+	0,          0,      0,         0,          0,      0,           0,        0,
+	0,          0,      0,         0,          0,      0,           0,        0      // 7
+};
+
+static const unsigned char s_scantokey_spanish[256] = {
+	//  0            1       2          3          4       5            6         7
+	//  8            9       A          B          C       D            E         F
+	0,           27,    '1',       '2',        '3',    '4',         '5',      '6',
+	'7',        '8',    '9',       '0',        '\'',   '¡',         K_BACKSPACE, 9,  // 0 
+	'q',        'w',    'e',       'r',        't',    'y',         'u',      'i',
+	'o',        'p',    '`',       '+',        K_ENTER,K_LCTRL,      'a',      's',   // 1 
+	'd',        'f',    'g',       'h',        'j',    'k',         'l',      'ñ',
+	'´',        'º',    K_LSHIFT,   'ç',        'z',    'x',         'c',      'v',   // 2 
+	'b',        'n',    'm',       ',',        '.',    '-',         K_RSHIFT,  K_KP_STAR,
+	K_LALT,      K_SPACE,    K_CAPSLOCK,K_F1,       K_F2,   K_F3,        K_F4,     K_F5,  // 3
+	K_F6,       K_F7,   K_F8,      K_F9,       K_F10,  K_PAUSE,     K_SCROLL, K_HOME,
+	K_UPARROW,  K_PGUP, K_KP_MINUS,K_LEFTARROW,K_KP_5, K_RIGHTARROW,K_KP_PLUS,K_END, // 4
+	K_DOWNARROW,K_PGDN, K_INS,     K_DEL,      0,      0,           '<',      K_F11,
+	K_F12,      0,      0,         K_LWIN,     K_RWIN, K_APPS,      0,        0,     // 5
+	0,          0,      0,         0,          0,      0,           0,        0,
+	0,          0,      0,         0,          0,      0,           0,        0,     // 6
+	0,          0,      0,         0,          0,      0,           0,        0,
+	0,          0,      0,         0,          0,      0,           0,        0,      // 7
+																					  // shifted
+	0,           27,    '!',       '\"',        '·',    '$',         '%',      '&',
+	'/',        '(',    ')',       '=',        '?',   '¿',         K_BACKSPACE, 9,  // 0 
+	'q',        'w',    'e',       'r',        't',    'y',         'u',      'i',
+	'o',        'p',    '^',       '*',        K_ENTER,K_LCTRL,      'a',      's',   // 1 
+	'd',        'f',    'g',       'h',        'j',    'k',         'l',      'Ñ',
+	'¨',        'ª',    K_LSHIFT,   'Ç',        'z',    'x',         'c',      'v',   // 2 
+	'b',        'n',    'm',       ',',        '.',    '-',         K_RSHIFT,  K_KP_STAR,
+	K_LALT,      K_SPACE,    K_CAPSLOCK,K_F1,       K_F2,   K_F3,        K_F4,     K_F5,  // 3
+	K_F6,       K_F7,   K_F8,      K_F9,       K_F10,  K_PAUSE,     K_SCROLL, K_HOME,
+	K_UPARROW,  K_PGUP, K_KP_MINUS,K_LEFTARROW,K_KP_5, K_RIGHTARROW,K_KP_PLUS,K_END, // 4
+	K_DOWNARROW,K_PGDN, K_INS,     K_DEL,      0,      0,           '<',      K_F11,
+	K_F12,      0,      0,         K_LWIN,     K_RWIN, K_APPS,      0,        0,     // 5
+	0,          0,      0,         0,          0,      0,           0,        0,
+	0,          0,      0,         0,          0,      0,           0,        0,     // 6
+	0,          0,      0,         0,          0,      0,           0,        0,
+	0,          0,      0,         0,          0,      0,           0,        0      // 7
+};
+
+static const unsigned char s_scantokey_italian[256] = {
+	//  0            1       2          3          4       5            6         7
+	//  8            9       A          B          C       D            E         F
+	0,           27,    '1',       '2',        '3',    '4',         '5',      '6',
+	'7',        '8',    '9',       '0',        '\'',   'ì',         K_BACKSPACE, 9,  // 0 
+	'q',        'w',    'e',       'r',        't',    'y',         'u',      'i',
+	'o',        'p',    'è',       '+',        K_ENTER,K_LCTRL,      'a',      's',   // 1 
+	'd',        'f',    'g',       'h',        'j',    'k',         'l',      'ò',
+	'à',        '\\',    K_LSHIFT,   'ù',        'z',    'x',         'c',      'v',   // 2 
+	'b',        'n',    'm',       ',',        '.',    '-',         K_RSHIFT,  K_KP_STAR,
+	K_LALT,      K_SPACE,    K_CAPSLOCK,K_F1,       K_F2,   K_F3,        K_F4,     K_F5,  // 3
+	K_F6,       K_F7,   K_F8,      K_F9,       K_F10,  K_PAUSE,     K_SCROLL, K_HOME,
+	K_UPARROW,  K_PGUP, K_KP_MINUS,K_LEFTARROW,K_KP_5, K_RIGHTARROW,K_KP_PLUS,K_END, // 4
+	K_DOWNARROW,K_PGDN, K_INS,     K_DEL,      0,      0,           '<',      K_F11,
+	K_F12,      0,      0,         K_LWIN,     K_RWIN, K_APPS,      0,        0,     // 5
+	0,          0,      0,         0,          0,      0,           0,        0,
+	0,          0,      0,         0,          0,      0,           0,        0,     // 6
+	0,          0,      0,         0,          0,      0,           0,        0,
+	0,          0,      0,         0,          0,      0,           0,        0,      // 7
+																					  // shifted
+	0,           27,    '!',       '\"',        '£',    '$',         '%',      '&',
+	'/',        '(',    ')',       '=',        '?',   '^',         K_BACKSPACE, 9,  // 0 
+	'q',        'w',    'e',       'r',        't',    'y',         'u',      'i',
+	'o',        'p',    'é',       '*',        K_ENTER,K_LCTRL,      'a',      's',   // 1 
+	'd',        'f',    'g',       'h',        'j',    'k',         'l',      'ç',
+	'°',        '|',    K_LSHIFT,   '§',        'z',    'x',         'c',      'v',   // 2 
+	'b',        'n',    'm',       ',',        '.',    '-',         K_RSHIFT,  K_KP_STAR,
+	K_LALT,      K_SPACE,    K_CAPSLOCK,K_F1,       K_F2,   K_F3,        K_F4,     K_F5,  // 3
+	K_F6,       K_F7,   K_F8,      K_F9,       K_F10,  K_PAUSE,     K_SCROLL, K_HOME,
+	K_UPARROW,  K_PGUP, K_KP_MINUS,K_LEFTARROW,K_KP_5, K_RIGHTARROW,K_KP_PLUS,K_END, // 4
+	K_DOWNARROW,K_PGDN, K_INS,     K_DEL,      0,      0,           '<',      K_F11,
+	K_F12,      0,      0,         K_LWIN,     K_RWIN, K_APPS,      0,        0,     // 5
+	0,          0,      0,         0,          0,      0,           0,        0,
+	0,          0,      0,         0,          0,      0,           0,        0,     // 6
+	0,          0,      0,         0,          0,      0,           0,        0,
+	0,          0,      0,         0,          0,      0,           0,        0		 // 7
+
+
+};
+
+static const unsigned char *keyScanTable = s_scantokey;
+
+// this should be part of the scantables and the scan tables should be 512 bytes
+// (256 scan codes, shifted and unshifted).  Changing everything to use 512 byte
+// scan tables now might introduce bugs in tested code.  Since we only need to fix
+// the right-alt case for non-US keyboards, we're just using a special-case table
+// for it.  Eventually, the tables above should be fixed to handle all possible
+// scan codes instead of just the first 128.
+static unsigned char	rightAltKey = K_RALT;
+
+
+/*
+==================
+Sys_GetScanTable
+==================
+*/
+const unsigned char *Sys_GetScanTable(void) {
+	return keyScanTable;
+}
+
+//ANON end

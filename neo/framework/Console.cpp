@@ -1271,6 +1271,18 @@ void idConsoleLocal::Print( const char* txt )
 	int		c, l;
 	int		color;
 	
+	//anon
+#ifdef ID_ALLOW_TOOLS
+
+//anon fix me
+///	RadiantPrint(txt);
+
+	if (com_editors & EDITOR_MATERIAL) {
+		//ANON:Linking errors plus code isnt included
+		//MaterialEditorPrintConsole(txt);
+	}
+#endif
+
 	if( TOTAL_LINES == 0 )
 	{
 		// not yet initialized

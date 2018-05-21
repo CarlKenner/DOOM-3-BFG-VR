@@ -1356,8 +1356,16 @@ static void RB_RenderInteractions( const drawSurf_t* surfList, const viewLight_t
 	// are added single-threaded, and there is only a negligable amount
 	// of benefit to trying to sort by materials.
 	//---------------------------------
-	static const int MAX_INTERACTIONS_PER_LIGHT = 1024;
-	static const int MAX_COMPLEX_INTERACTIONS_PER_LIGHT = 256;
+	//ANON
+#ifdef ID_ALLOW_TOOLS
+	// foresthale 2014-05-28: for sake of radiant usability, increased this from 1024,128 to 8192,4096
+	static const int MAX_INTERACTIONS_PER_LIGHT = 16384; //8192;
+	static const int MAX_COMPLEX_INTERACTIONS_PER_LIGHT = 32768; // 8192; //4096;
+#else
+	static const int MAX_INTERACTIONS_PER_LIGHT = 16384; // 1024;
+	static const int MAX_COMPLEX_INTERACTIONS_PER_LIGHT = 8192; // 128;
+#endif
+	//ANON
 	idStaticList< const drawSurf_t*, MAX_INTERACTIONS_PER_LIGHT > allSurfaces;
 	idStaticList< const drawSurf_t*, MAX_COMPLEX_INTERACTIONS_PER_LIGHT > complexSurfaces;
 	for( const drawSurf_t* walk = surfList; walk != NULL; walk = walk->nextOnLight )

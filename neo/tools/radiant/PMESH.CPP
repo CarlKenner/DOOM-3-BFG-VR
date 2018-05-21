@@ -1187,7 +1187,7 @@ void Patch_CapTexture( patchMesh_t *p,bool bFaceCycle = false,bool alt = false )
 	for ( int i = 0 ; i < p->width; i++ ) {
 		for ( int j = 0 ; j < p->height ; j++ ) {
 			if ( !bFaceCycle ) {
-				VectorCopy(p->ctrl(i, j).normal, f->plane);
+				VectorCopy(p->ctrl(i, j).GetNormal(), f->plane);
 			}
 			idVec5	temp;
 			temp.x = p->ctrl(i, j).xyz.x;
@@ -4074,7 +4074,7 @@ void Patch_Thicken( int nAmount,bool bSeam ) {
 		patchMesh_t	*pNew	= Patch_Duplicate(p);
 		for ( i = 0; i < p->width; i++ ) {
 			for ( j = 0; j < p->height; j++ ) {
-				VectorMA(p->ctrl(i, j).xyz, nAmount, p->ctrl(i, j).normal, pNew->ctrl(i, j).xyz);
+				VectorMA(p->ctrl(i, j).xyz, nAmount, p->ctrl(i, j).GetNormal(), pNew->ctrl(i, j).xyz);
 			}
 		}
 

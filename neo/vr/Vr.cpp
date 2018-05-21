@@ -881,6 +881,7 @@ void iVr::HMDInitializeDistortion()
 					hmdEye[eye].projectionHmd[y * 4 + x] = pEye.M[x][y];
 				}
 			}
+			//ANON: Changed from HmdToEyeOffset to HmdToEyePose
 			hmdEye[eye].viewOffset.x = hmdEye[eye].eyeRenderDesc.HmdToEyePose.Position.x;
 			hmdEye[eye].viewOffset.y = hmdEye[eye].eyeRenderDesc.HmdToEyePose.Position.y;
 			hmdEye[eye].viewOffset.z = hmdEye[eye].eyeRenderDesc.HmdToEyePose.Position.z;

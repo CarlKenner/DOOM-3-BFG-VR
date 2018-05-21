@@ -33,6 +33,8 @@ If you have questions concerning this license or the applicable additional terms
 
 #include "../Game_local.h"
 
+int idInterpreter::sLastScriptExecuteTime = 0;
+
 /*
 ================
 idInterpreter::idInterpreter()
@@ -1114,7 +1116,8 @@ bool idInterpreter::Execute()
 	}
 	
 	runaway = 5000000;
-	
+	sLastScriptExecuteTime = gameLocal.time;
+
 	doneProcessing = false;
 	while( !doneProcessing && !threadDying )
 	{

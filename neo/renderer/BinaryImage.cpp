@@ -47,7 +47,7 @@ idCVar image_highQualityCompression( "image_highQualityCompression", "0", CVAR_B
 idBinaryImage::Load2DFromMemory
 ========================
 */
-void idBinaryImage::Load2DFromMemory( int width, int height, const byte* pic_const, int numLevels, textureFormat_t& textureFormat, textureColor_t& colorFormat, bool gammaMips )
+void idBinaryImage::Load2DFromMemory( int width, int height, const byte* pic_const, int numLevels, textureFormat_t& textureFormat, textureColor_t& colorFormat, bool gammaMips, bool toolUsage)
 {
 	fileData.textureType = TT_2D;
 	fileData.format = textureFormat;
@@ -67,7 +67,7 @@ void idBinaryImage::Load2DFromMemory( int width, int height, const byte* pic_con
 	else if( colorFormat == CFM_NORMAL_DXT5 )
 	{
 		// Blah, HQ swizzles automatically, Fast doesn't
-		if( !image_highQualityCompression.GetBool() )
+		if( !image_highQualityCompression.GetBool() && !toolUsage )
 		{
 			for( int i = 0; i < width * height; i++ )
 			{
@@ -130,7 +130,7 @@ void idBinaryImage::Load2DFromMemory( int width, int height, const byte* pic_con
 		{
 			idDxtEncoder dxt;
 			img.Alloc( dxtWidth * dxtHeight / 2 );
-			if( image_highQualityCompression.GetBool() )
+			if( image_highQualityCompression.GetBool() && !toolUsage )
 			{
 				dxt.CompressImageDXT1HQ( dxtPic, img.data, dxtWidth, dxtHeight );
 			}
@@ -145,7 +145,7 @@ void idBinaryImage::Load2DFromMemory( int width, int height, const byte* pic_con
 			img.Alloc( dxtWidth * dxtHeight );
 			if( colorFormat == CFM_NORMAL_DXT5 )
 			{
-				if( image_highQualityCompression.GetBool() )
+				if( image_highQualityCompression.GetBool() && !toolUsage)
 				{
 					dxt.CompressNormalMapDXT5HQ( dxtPic, img.data, dxtWidth, dxtHeight );
 				}
@@ -154,9 +154,9 @@ void idBinaryImage::Load2DFromMemory( int width, int height, const byte* pic_con
 					dxt.CompressNormalMapDXT5Fast( dxtPic, img.data, dxtWidth, dxtHeight );
 				}
 			}
-			else if( colorFormat == CFM_YCOCG_DXT5 )
+			else if( colorFormat == CFM_YCOCG_DXT5  )
 			{
-				if( image_highQualityCompression.GetBool() )
+				if( image_highQualityCompression.GetBool() && !toolUsage )
 				{
 					dxt.CompressYCoCgDXT5HQ( dxtPic, img.data, dxtWidth, dxtHeight );
 				}
@@ -168,7 +168,7 @@ void idBinaryImage::Load2DFromMemory( int width, int height, const byte* pic_con
 			else
 			{
 				fileData.colorFormat = colorFormat = CFM_DEFAULT;
-				if( image_highQualityCompression.GetBool() )
+				if( image_highQualityCompression.GetBool() && !toolUsage)
 				{
 					dxt.CompressImageDXT5HQ( dxtPic, img.data, dxtWidth, dxtHeight );
 				}
@@ -287,7 +287,7 @@ static void PadImageTo4x4( const byte* src, int width, int height, byte dest[64]
 idBinaryImage::LoadCubeFromMemory
 ========================
 */
-void idBinaryImage::LoadCubeFromMemory( int width, const byte* pics[6], int numLevels, textureFormat_t& textureFormat, bool gammaMips )
+void idBinaryImage::LoadCubeFromMemory( int width, const byte* pics[6], int numLevels, textureFormat_t& textureFormat, bool gammaMips, bool toolUsage)
 {
 	fileData.textureType = TT_CUBIC;
 	fileData.format = textureFormat;
@@ -379,10 +379,11 @@ void idBinaryImage::LoadCubeFromMemory( int width, const byte* pics[6], int numL
 idBinaryImage::WriteGeneratedFile
 ========================
 */
-ID_TIME_T idBinaryImage::WriteGeneratedFile( ID_TIME_T sourceFileTime )
+ID_TIME_T idBinaryImage::WriteGeneratedFile( ID_TIME_T sourceFileTime, bool toolUsage)
 {
 	idStr binaryFileName;
-	MakeGeneratedFileName( binaryFileName );
+	//Anon
+	MakeGeneratedFileName(binaryFileName, toolUsage); //MakeGeneratedFileName( binaryFileName );
 	idFileLocal file( fileSystem->OpenFileWrite( binaryFileName, "fs_basepath" ) );
 	if( file == NULL )
 	{
@@ -423,10 +424,10 @@ idBinaryImage::LoadFromGeneratedFile
 Load the preprocessed image from the generated folder.
 ==========================
 */
-ID_TIME_T idBinaryImage::LoadFromGeneratedFile( ID_TIME_T sourceFileTime )
+ID_TIME_T idBinaryImage::LoadFromGeneratedFile( ID_TIME_T sourceFileTime, bool toolUsage )
 {
 	idStr binaryFileName;
-	MakeGeneratedFileName( binaryFileName );
+	MakeGeneratedFileName(binaryFileName, toolUsage);  //MakeGeneratedFileName( binaryFileName );
 	idFileLocal bFile = fileSystem->OpenFileRead( binaryFileName );
 	if( bFile == NULL )
 	{
@@ -522,22 +523,29 @@ bool idBinaryImage::LoadFromGeneratedFile( idFile* bFile, ID_TIME_T sourceTimeSt
 idBinaryImage::MakeGeneratedFileName
 ==========================
 */
-void idBinaryImage::MakeGeneratedFileName( idStr& gfn )
+void idBinaryImage::MakeGeneratedFileName(idStr& gfn, bool toolUsage)
 {
-	GetGeneratedFileName( gfn, GetName() );
+	GetGeneratedFileName(gfn, GetName(), toolUsage);
 }
 /*
 ==========================
 idBinaryImage::GetGeneratedFileName
 ==========================
 */
-void idBinaryImage::GetGeneratedFileName( idStr& gfn, const char* name )
+void idBinaryImage::GetGeneratedFileName(idStr& gfn, const char* name, bool toolUsage)
 {
-	gfn.Format( "generated/images/%s.bimage", name );
-	gfn.Replace( "(", "/" );
-	gfn.Replace( ",", "/" );
-	gfn.Replace( ")", "" );
-	gfn.Replace( " ", "" );
+	if (idStr::Icmpn(name, "savegame", 7) == 0) {
+		gfn.Format("%s.bimage", name);
+	}
+	else {
+		const char * genFolder = toolUsage ? "generated_tools" : "generated";
+		gfn.Format("%s/images/%s.bimage", genFolder, name);
+	}
+	gfn.Replace("(", "/");
+	gfn.Replace(",", "/");
+	gfn.Replace(")", "");
+	gfn.Replace(" ", "");
 }
+
 
 

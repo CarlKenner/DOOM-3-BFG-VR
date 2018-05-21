@@ -492,7 +492,8 @@ void iVoice::Event( WPARAM wParam, LPARAM lParam )
 					maxVolume = currentVolume;
 				//common->Printf("$ SR Audio Level: %3d / 100\n", event.wParam);
 				break;
-			case SPEI_SR_RETAINEDAUDIO:
+				//ANON
+/*			case SPEI_SR_RETAINEDAUDIO:
 				common->Printf("$ SR Retained Audio\n");
 				break;
 			case SPEI_SR_PRIVATE:
@@ -500,7 +501,7 @@ void iVoice::Event( WPARAM wParam, LPARAM lParam )
 				break;
 			case SPEI_ACTIVE_CATEGORY_CHANGED:
 				common->Printf("$ Active Category changed\n");
-				break;
+				break;*/
 		}
 	}
 }

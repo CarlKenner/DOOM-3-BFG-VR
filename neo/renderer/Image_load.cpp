@@ -32,6 +32,9 @@ If you have questions concerning this license or the applicable additional terms
 #include "DXT/DXTCodec.h"
 #include "tr_local.h"
 
+idCVar r_cacheToolImages("r_cacheToolImages", "1", CVAR_BOOL, "Enable binarization and caching of editor formatted images. Disable will not load from generated or save to generated.");
+
+
 /*
 ================
 BitsForFormat
@@ -141,6 +144,27 @@ ID_INLINE void idImage::DeriveOpts()
 			case TD_LOOKUP_TABLE_RGBA:
 				opts.format = FMT_RGBA8;
 				break;
+			//anon
+			// foresthale 2014-05-17: added TD_EDITOR* image types (uncompressed variants of TD_DEFAULT and such, which always read .tga, and do not write .bimage)
+			case TD_EDITOR_DEFAULT:
+				opts.colorFormat = CFM_DEFAULT;
+				opts.format = FMT_DXT5;
+				opts.gammaMips = true;
+				break;
+			case TD_EDITOR_DIFFUSE:
+				opts.colorFormat = CFM_YCOCG_DXT5;
+				opts.format = FMT_DXT5;
+				opts.gammaMips = true;
+				break;
+			case TD_EDITOR_BUMP:
+				opts.colorFormat = CFM_NORMAL_DXT5;
+				opts.format = FMT_DXT5;
+				opts.gammaMips = true;
+				break;
+			case TD_EDITOR_COVERAGE:
+				opts.colorFormat = CFM_GREEN_ALPHA;
+				opts.format = FMT_DXT5;
+				break;
 			default:
 				assert( false );
 				opts.format = FMT_RGBA8;
@@ -216,9 +240,12 @@ void idImage::GenerateImage( const byte* pic, int width, int height, textureFilt
 	{
 		return;
 	}
-	
+
+	//anon
+	const bool toolUsage = IsToolUsage(usageParm);
+
 	idBinaryImage im( GetName() );
-	im.Load2DFromMemory( width, height, pic, opts.numLevels, opts.format, opts.colorFormat, opts.gammaMips );
+	im.Load2DFromMemory( width, height, pic, opts.numLevels, opts.format, opts.colorFormat, opts.gammaMips, toolUsage);
 	
 	AllocImage();
 	
@@ -261,8 +288,11 @@ void idImage::GenerateCubeImage( const byte* pic[6], int size, textureFilter_t f
 		return;
 	}
 	
+	//ANON
+	const bool toolUsage = IsToolUsage(usageParm);
+
 	idBinaryImage im( GetName() );
-	im.LoadCubeFromMemory( size, pic, opts.numLevels, opts.format, opts.gammaMips );
+	im.LoadCubeFromMemory( size, pic, opts.numLevels, opts.format, opts.gammaMips, toolUsage );
 	
 	AllocImage();
 	
@@ -391,6 +421,9 @@ void idImage::ActuallyLoadImage( bool fromBackEnd )
 		}
 	}
 	
+	//ANon:
+	const bool toolUsage = IsToolUsage(usage);
+
 	// Figure out opts.colorFormat and opts.format so we can make sure the binary image is up to date
 	DeriveOpts();
 	
@@ -398,10 +431,12 @@ void idImage::ActuallyLoadImage( bool fromBackEnd )
 	GetGeneratedName( generatedName, usage, cubeFiles );
 	
 	idBinaryImage im( generatedName );
-	binaryFileTime = im.LoadFromGeneratedFile( sourceFileTime );
+	binaryFileTime = (!toolUsage || r_cacheToolImages.GetBool()) ? im.LoadFromGeneratedFile(sourceFileTime, toolUsage) : FILE_NOT_FOUND_TIMESTAMP;
 	
+	const bool binaryFileFound = binaryFileTime != FILE_NOT_FOUND_TIMESTAMP;
+
 	// BFHACK, do not want to tweak on buildgame so catch these images here
-	if( binaryFileTime == FILE_NOT_FOUND_TIMESTAMP && fileSystem->UsingResourceFiles() )
+	if( binaryFileFound == FILE_NOT_FOUND_TIMESTAMP && fileSystem->UsingResourceFiles() )
 	{
 		int c = 1;
 		while( c-- > 0 )
@@ -410,47 +445,48 @@ void idImage::ActuallyLoadImage( bool fromBackEnd )
 			{
 				generatedName.Replace( "white#__0000", "white#__0200" );
 				im.SetName( generatedName );
-				binaryFileTime = im.LoadFromGeneratedFile( sourceFileTime );
+				binaryFileTime = im.LoadFromGeneratedFile( sourceFileTime, toolUsage );
 				break;
 			}
 			if( generatedName.Find( "guis/assets/white#__0100", false ) >= 0 )
 			{
 				generatedName.Replace( "white#__0100", "white#__0200" );
 				im.SetName( generatedName );
-				binaryFileTime = im.LoadFromGeneratedFile( sourceFileTime );
+				binaryFileTime = im.LoadFromGeneratedFile( sourceFileTime, toolUsage );
 				break;
 			}
 			if( generatedName.Find( "textures/black#__0100", false ) >= 0 )
 			{
 				generatedName.Replace( "black#__0100", "black#__0200" );
 				im.SetName( generatedName );
-				binaryFileTime = im.LoadFromGeneratedFile( sourceFileTime );
+				binaryFileTime = im.LoadFromGeneratedFile( sourceFileTime, toolUsage );
 				break;
 			}
 			if( generatedName.Find( "textures/decals/bulletglass1_d#__0100", false ) >= 0 )
 			{
 				generatedName.Replace( "bulletglass1_d#__0100", "bulletglass1_d#__0200" );
 				im.SetName( generatedName );
-				binaryFileTime = im.LoadFromGeneratedFile( sourceFileTime );
+				binaryFileTime = im.LoadFromGeneratedFile( sourceFileTime, toolUsage );
 				break;
 			}
 			if( generatedName.Find( "models/monsters/skeleton/skeleton01_d#__1000", false ) >= 0 )
 			{
 				generatedName.Replace( "skeleton01_d#__1000", "skeleton01_d#__0100" );
 				im.SetName( generatedName );
-				binaryFileTime = im.LoadFromGeneratedFile( sourceFileTime );
+				binaryFileTime = im.LoadFromGeneratedFile( sourceFileTime, toolUsage );
 				break;
 			}
 		}
 	}
-
 	const bimageFile_t& header = im.GetFileHeader();
 	
-	if( ( fileSystem->InProductionMode() && binaryFileTime != FILE_NOT_FOUND_TIMESTAMP ) || ( ( binaryFileTime != FILE_NOT_FOUND_TIMESTAMP )
-			&& ( header.colorFormat == opts.colorFormat )
-			&& ( header.format == opts.format )
-			&& ( header.textureType == opts.textureType )
-																							) )
+	if (((fileSystem->InProductionMode() || sourceFileTime <= 0) && binaryFileFound)
+		|| ((binaryFileFound)
+			&& (header.colorFormat == opts.colorFormat)
+			&& (header.format == opts.format)
+			&& (header.textureType == opts.textureType)
+			&& (!toolUsage || r_cacheToolImages.GetBool())
+			))
 	{
 		opts.width = header.width;
 		opts.height = header.height;
@@ -483,7 +519,7 @@ void idImage::ActuallyLoadImage( bool fromBackEnd )
 			opts.height = size;
 			opts.numLevels = 0;
 			DeriveOpts();
-			im.LoadCubeFromMemory( size, ( const byte** )pics, opts.numLevels, opts.format, opts.gammaMips );
+			im.LoadCubeFromMemory( size, ( const byte** )pics, opts.numLevels, opts.format, opts.gammaMips, toolUsage );
 			repeat = TR_CLAMP;
 			
 			for( int i = 0; i < 6; i++ )
@@ -527,11 +563,12 @@ void idImage::ActuallyLoadImage( bool fromBackEnd )
 			opts.height = height;
 			opts.numLevels = 0;
 			DeriveOpts();
-			im.Load2DFromMemory( opts.width, opts.height, pic, opts.numLevels, opts.format, opts.colorFormat, opts.gammaMips );
+			im.Load2DFromMemory( opts.width, opts.height, pic, opts.numLevels, opts.format, opts.colorFormat, opts.gammaMips, toolUsage );
 			
 			Mem_Free( pic );
 		}
-		binaryFileTime = im.WriteGeneratedFile( sourceFileTime );
+		if (!toolUsage || r_cacheToolImages.GetBool())
+			binaryFileTime = im.WriteGeneratedFile(sourceFileTime, toolUsage);
 	}
 	
 	AllocImage();
@@ -581,47 +618,56 @@ void idImage::ActuallySaveImage() {
 		}
 	}
 
+	const bool toolUsage = IsToolUsage(usage);
+
 	// Figure out opts.colorFormat and opts.format so we can make sure the binary image is up to date
 	DeriveOpts();
 
 	idStr generatedName = GetName();
 	GetGeneratedName( generatedName, usage, cubeFiles );
 
-	idBinaryImage im( generatedName );
-	binaryFileTime = im.LoadFromGeneratedFile( sourceFileTime );
+	idBinaryImage im(generatedName);
+	binaryFileTime = (!toolUsage || r_cacheToolImages.GetBool()) ? im.LoadFromGeneratedFile(sourceFileTime, toolUsage) : FILE_NOT_FOUND_TIMESTAMP;
+
+	const bool binaryFileFound = binaryFileTime != FILE_NOT_FOUND_TIMESTAMP;
 
 	// BFHACK, do not want to tweak on buildgame so catch these images here
 	if ( binaryFileTime == FILE_NOT_FOUND_TIMESTAMP && fileSystem->UsingResourceFiles() ) {
 		int c = 1;
 		while ( c-- > 0 ) {
-			if ( generatedName.Find( "guis/assets/white#__0000", false ) >= 0 ) {
-				generatedName.Replace( "white#__0000", "white#__0200" );
-				im.SetName( generatedName );
-				binaryFileTime = im.LoadFromGeneratedFile( sourceFileTime );
+			if (generatedName.Find("guis/assets/white#__0000", false) >= 0)
+			{
+				generatedName.Replace("white#__0000", "white#__0200");
+				im.SetName(generatedName);
+				binaryFileTime = im.LoadFromGeneratedFile(sourceFileTime, toolUsage);
 				break;
 			}
-			if ( generatedName.Find( "guis/assets/white#__0100", false ) >= 0 ) {
-				generatedName.Replace( "white#__0100", "white#__0200" );
-				im.SetName( generatedName );
-				binaryFileTime = im.LoadFromGeneratedFile( sourceFileTime );
+			if (generatedName.Find("guis/assets/white#__0100", false) >= 0)
+			{
+				generatedName.Replace("white#__0100", "white#__0200");
+				im.SetName(generatedName);
+				binaryFileTime = im.LoadFromGeneratedFile(sourceFileTime, toolUsage);
 				break;
 			}
-			if ( generatedName.Find( "textures/black#__0100", false ) >= 0 ) {
-				generatedName.Replace( "black#__0100", "black#__0200" );
-				im.SetName( generatedName );
-				binaryFileTime = im.LoadFromGeneratedFile( sourceFileTime );
+			if (generatedName.Find("textures/black#__0100", false) >= 0)
+			{
+				generatedName.Replace("black#__0100", "black#__0200");
+				im.SetName(generatedName);
+				binaryFileTime = im.LoadFromGeneratedFile(sourceFileTime, toolUsage);
 				break;
 			}
-			if ( generatedName.Find( "textures/decals/bulletglass1_d#__0100", false ) >= 0 ) {
-				generatedName.Replace( "bulletglass1_d#__0100", "bulletglass1_d#__0200" );
-				im.SetName( generatedName );
-				binaryFileTime = im.LoadFromGeneratedFile( sourceFileTime );
+			if (generatedName.Find("textures/decals/bulletglass1_d#__0100", false) >= 0)
+			{
+				generatedName.Replace("bulletglass1_d#__0100", "bulletglass1_d#__0200");
+				im.SetName(generatedName);
+				binaryFileTime = im.LoadFromGeneratedFile(sourceFileTime, toolUsage);
 				break;
 			}
-			if ( generatedName.Find( "models/monsters/skeleton/skeleton01_d#__1000", false ) >= 0 ) {
-				generatedName.Replace( "skeleton01_d#__1000", "skeleton01_d#__0100" );
-				im.SetName( generatedName );
-				binaryFileTime = im.LoadFromGeneratedFile( sourceFileTime );
+			if (generatedName.Find("models/monsters/skeleton/skeleton01_d#__1000", false) >= 0)
+			{
+				generatedName.Replace("skeleton01_d#__1000", "skeleton01_d#__0100");
+				im.SetName(generatedName);
+				binaryFileTime = im.LoadFromGeneratedFile(sourceFileTime, toolUsage);
 				break;
 			}
 		}
@@ -681,7 +727,7 @@ void idImage::ActuallySaveImage() {
 			opts.height = size;
 			opts.numLevels = 0;
 			DeriveOpts();
-			im.LoadCubeFromMemory( size, (const byte **)pics, opts.numLevels, opts.format, opts.gammaMips );
+			im.LoadCubeFromMemory( size, (const byte **)pics, opts.numLevels, opts.format, opts.gammaMips, toolUsage);
 			repeat = TR_CLAMP;
 
 			for ( int i = 0; i < 6; i++ ) {
@@ -722,11 +768,11 @@ void idImage::ActuallySaveImage() {
 			opts.height = height;
 			opts.numLevels = 0;
 			DeriveOpts();
-			im.Load2DFromMemory( opts.width, opts.height, pic, opts.numLevels, opts.format, opts.colorFormat, opts.gammaMips );
+			im.Load2DFromMemory( opts.width, opts.height, pic, opts.numLevels, opts.format, opts.colorFormat, opts.gammaMips, toolUsage);
 
 			Mem_Free( pic );
 		}
-		binaryFileTime = im.WriteGeneratedFile( sourceFileTime );
+		binaryFileTime = im.WriteGeneratedFile( sourceFileTime, toolUsage);
 	}
 
 	AllocImage();
@@ -793,6 +839,12 @@ void idImage::Bind()
 			}
 			// RB end
 		}
+		// foresthale 2014-05-10: when using the tools code (which does not use shaders) we have to manage the texture unit enables
+		if (com_editors)
+		{
+			//qglActiveTexture(GL_TEXTURE0_ARB + texUnit);
+			glEnable(GL_TEXTURE_2D);
+		}
 	}
 	else if( opts.textureType == TT_CUBIC )
 	{
@@ -813,6 +865,12 @@ void idImage::Bind()
 				glBindTexture( GL_TEXTURE_CUBE_MAP, texnum );
 			}
 			// RB end
+		}
+		// foresthale 2014-05-10: when using the tools code (which does not use shaders) we have to manage the texture unit enables
+		if (com_editors)
+		{
+			//qglActiveTexture(GL_TEXTURE0_ARB + texUnit);
+			glEnable(GL_TEXTURE_CUBE_MAP);
 		}
 	}
 	else if( opts.textureType == TT_2D_ARRAY )

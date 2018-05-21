@@ -103,6 +103,10 @@ float com_engineHz_latched = 60.0f; // Latched version of cvar, updated between 
 int64 com_engineHz_numerator = 100LL * 1000LL;
 int64 com_engineHz_denominator = 100LL * 60LL;
 
+//anon
+int com_editors;
+bool com_editorActive;		//  true if an editor has focus
+
 // RB begin
 #if defined(_WIN32)
 HWND com_hwndMsg = NULL;
@@ -230,6 +234,72 @@ void idCommonLocal::Quit()
 	Sys_Quit();
 }
 
+//ANON
+#ifdef ID_ALLOW_TOOLS
+/*
+==================
+Com_Editor_f
+
+we can start the editor dynamically, but we won't ever get back
+==================
+*/
+static void Com_Editor_f(const idCmdArgs &args) {
+	RadiantInit();
+}
+
+
+/*
+=============
+Com_ScriptDebugger_f
+=============
+*/
+static void Com_ScriptDebugger_f(const idCmdArgs &args) {
+#ifdef USE_MFC_TOOLS
+	DebuggerServerInit();
+
+	// Make sure it wasnt on the command line
+	if (!(com_editors & EDITOR_DEBUGGER)) {
+		DebuggerClientInit(NULL);
+	}
+#else
+	common->Printf("Debugger not included in build\n");
+#endif
+}
+
+/*
+=============
+Com_EditGUIs_f
+=============
+*/
+static void Com_EditGUIs_f(const idCmdArgs &args) {
+
+	// motorsep 12-28-2014; safety mechanicsm that ensures AA is off before GUI Editor can be used; eventually we might need a better solution or at least a Dialog window that lets user know about restart
+	// potentially I see having a menu screen with all tools shortcuts there and dialog window popping up if restart or some settings changes are required
+	int antialiasing = cvarSystem->GetCVarInteger("r_multiSamples");
+
+	if (antialiasing != 0) {
+		idStr cmdLine = Sys_GetCmdLine();
+		cmdLine.Append(" +set r_multiSamples 0");
+		Sys_ReLaunch((void*)cmdLine.c_str(), cmdLine.Length());
+		return;
+	}
+
+	GUIEditorInit();
+}
+
+/*
+=============
+Com_MaterialEditor_f
+=============
+*/
+static void Com_MaterialEditor_f(const idCmdArgs &args) {
+	// Turn off sounds
+	soundSystem->SetMute(true);
+	//ANON:Linking errors plus code isnt included
+	//MaterialEditorInit();
+}
+#endif // ID_ALLOW_TOOLS
+//ANON end
 
 /*
 ============================================================================
@@ -2246,6 +2316,58 @@ void idCommonLocal::PerformGameSwitch()
 
 #endif // #if defined(USE_DOOMCLASSIC)
 // RB end
+
+/*
+=================
+idCommonLocal::InitTool
+=================
+*/
+void idCommonLocal::InitTool(const toolFlag_t tool, const idDict *dict) {
+#ifdef ID_ALLOW_TOOLS
+	if (tool & EDITOR_SOUND) {
+		SoundEditorInit(dict);
+	}
+	else if (tool & EDITOR_LIGHT) {
+		LightEditorInit(dict);
+	}
+	else if (tool & EDITOR_PARTICLE) {
+		ParticleEditorInit(dict);
+	}
+	else if (tool & EDITOR_AF) {
+		AFEditorInit(dict);
+	}
+#endif
+}
+
+/*
+==================
+idCommonLocal::ActivateTool
+
+Activates or Deactivates a tool
+==================
+*/
+void idCommonLocal::ActivateTool(bool active) {
+	com_editorActive = active;
+	//	 ** Tools don't need to grab the mouse.  The SDL window grabs and release the mouse when activated.
+	//	Sys_GrabMouseCursor( !active );
+}
+
+/*
+==================
+idCommonLocal::WriteFlaggedCVarsToFile
+==================
+*/
+void idCommonLocal::WriteFlaggedCVarsToFile(const char *filename, int flags, const char *setCmd) {
+	idFile *f;
+
+	f = fileSystem->OpenFileWrite(filename, "fs_configpath");
+	if (!f) {
+		Printf("Couldn't write %s.\n", filename);
+		return;
+	}
+	cvarSystem->WriteFlaggedVariables(flags, setCmd, f);
+	fileSystem->CloseFile(f);
+}
 
 /*
 ==================

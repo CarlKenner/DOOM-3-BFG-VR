@@ -71,4 +71,8 @@ If you have questions concerning this license or the applicable additional terms
 #endif
 // RB end
 
-
+//anon
+// editor info
+#define EDITOR_DEFAULT_PROJECT			"Doom3BFGVR.qe4"
+#define EDITOR_REGISTRY_KEY				"D3BFGRadiant"
+#define EDITOR_WINDOWTEXT				"Doom3BFGVR Level Editor"

@@ -719,6 +719,8 @@ void			Sys_Init();
 void			Sys_Shutdown();
 void			Sys_Error( const char* error, ... );
 const char* 	Sys_GetCmdLine();
+//ANON: motorsep 12-28-2014  - reverted back to the original Sys_ReLaunch; guys from RBDoom 3 BFG team made it impossible to pass any cmds on restart
+void Sys_ReLaunch(void * data, const unsigned int dataSize);
 // DG: Sys_ReLaunch() doesn't need any options (and the old way is painful for POSIX systems)
 void			Sys_ReLaunch();
 // DG end
@@ -819,6 +821,7 @@ void			Sys_ClearEvents();
 // the main window is recreated
 void			Sys_InitInput();
 void			Sys_ShutdownInput();
+const unsigned char *Sys_GetScanTable(void);
 
 // keyboard input polling
 int				Sys_PollKeyboardInputEvents();
@@ -983,6 +986,45 @@ private:
 	bool		silent;			// don't emit anything ( black hole )
 };
 
+//Anon:
+struct msg_t
+{
+	msg_t(int bufferSize = 32767, bool compressed = true);
+	~msg_t();
+
+	void ResetReadOffset();
+
+	bool ReadBytes(char * bytes, int numBytes);
+
+	template<typename T>
+	bool Read(T & output)
+	{
+		return ReadBytes((char*)&output, sizeof(T));
+	}
+	bool ReadString(char * buffer, int maxlength);
+
+	bool WriteBytes(const char * bytes, int numBytes);
+
+	template<typename T>
+	bool Write(const T & output)
+	{
+		return WriteBytes((const char *)&output, sizeof(T));
+	}
+
+	bool WriteString(const char * output);
+
+	bool ReadPacket(idUDP & socket, netadr_t & addrFrom);
+	void SendPacket(idUDP & socket, const netadr_t & addr);
+
+	const char * Data() const { return mData; }
+	int Size() const { return mDataOffset; }
+private:
+	char *			mData;
+	int				mDataSize;
+	int				mDataOffset;
+	const int		mDataMaxSize;
+	const bool		mCompressed;
+};
 
 
 // parses the port number
