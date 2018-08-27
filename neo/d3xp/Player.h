@@ -30,6 +30,7 @@ If you have questions concerning this license or the applicable additional terms
 #define __GAME_PLAYER_H__
 
 #include "PredictedValue.h"
+#include "vr/Bonus.h" // Carl
 
 /*
 ===============================================================================
@@ -153,6 +154,8 @@ public:
 	int						powerups;
 	int						armor;
 	int						maxarmor;
+	// Armor type is 0-3.
+	int						armortype;
 	int						powerupEndTime[ MAX_POWERUPS ];
 	
 	RechargeAmmo_t			rechargeAmmo[ AMMO_NUMTYPES ];
@@ -184,6 +187,8 @@ public:
 	int						lastGiveTime;
 	
 	idList<idLevelTriggerInfo, TAG_IDLIB_LIST_PLAYER> levelTriggers;
+
+	bonus_char_t			bonusChar;
 	
 	idInventory()
 	{
@@ -490,6 +495,8 @@ public:
 	idVec3					jetMoveVel;
 	int						jetMoveTime;
 	int						jetMoveCoolDownTime;
+
+	bonus_char_t			bonusChar; // Carl
 	
 	bool					spawnAnglesSet;		// on first usercmd, we must set deltaAngles
 	idAngles				spawnAngles;
